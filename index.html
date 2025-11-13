@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Portfolio</title>
+  <!-- 미래적인 느낌의 웹 폰트 추가 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap" rel="stylesheet">
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ScrollMagic/2.0.8/ScrollMagic.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ScrollMagic/2.0.8/plugins/debug.addIndicators.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      color: #333;
+      line-height: 1.6;
+      scroll-behavior: smooth;
+      background-color: #000;
+      overflow: hidden; /* 로딩 중 스크롤 방지 */
+    }
+    
+    body.loaded {
+      overflow: auto; /* 로딩 후 스크롤 활성화 */
+    }
+
+    /* ===== ✨ Sci-Fi 로딩 스크린 스타일 시작 ===== */
+    #loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url('loading-bg.jpg');
+      background-size: cover;
+      background-position: center;
+      z-index: 9999;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: "Orbitron", sans-serif;
+      transition: opacity 1.5s ease-out, visibility 1.5s ease-out;
+    }
+
+    .loading-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .progress-bar-container {
+      width: 200px;
+      height: 40px;
+      background-color: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 4px;
+      z-index: 10; 
+    }
+
+    .progress-bar {
+      width: 0%;
+      height: 100%;
+      background-color: rgba(255, 255, 255, 0.4);
+      transition: width 0.1s linear;
+    }
+
+    .loading-percentage {
+      position: absolute;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 1.2rem;
+      text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+      z-index: 10;
+    }
+    
+    /* ✨ 파도(웨이브) 애니메이션 스타일 시작 */
+    .wave-container {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: space-around; /* 파동 발생 지점을 수평으로 분산 */
+        align-items: center;
+    }
+
+    .pulse-source {
+        position: relative;
+        width: 1px;
+        height: 1px;
+    }
+    
+    .pulse-wave {
+        position: absolute;
+        /* 파동의 시작 위치를 부모의 중앙으로 설정 */
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 100px; /* 시작 크기 */
+        height: 100px;
+        border-radius: 50%;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        animation: pulse-animation 3s ease-out infinite;
+    }
+    
+    /* 개별 파동의 깊이감을 위한 시차 */
+    .pulse-source .pulse-wave:nth-of-type(2) {
+        animation-delay: 0.5s;
+    }
+    .pulse-source .pulse-wave:nth-of-type(3) {
+        animation-delay: 1.0s;
+    }
+    
+    /* ✨ 중앙에서 바깥으로 퍼지는 파도 효과를 위한 시차 설정 */
+    /* 7개의 발생 지점 중 중앙(4번째)에서 가장 먼저 시작 */
+    .pulse-source:nth-child(4) .pulse-wave { animation-delay: calc(var(--animation-delay, 0s) + 0s); }
+    /* 중앙 양 옆(3, 5번째) */
+    .pulse-source:nth-child(3) .pulse-wave,
+    .pulse-source:nth-child(5) .pulse-wave { animation-delay: calc(var(--animation-delay, 0s) + 0.2s); }
+    /* 그 다음 양 옆(2, 6번째) */
+    .pulse-source:nth-child(2) .pulse-wave,
+    .pulse-source:nth-child(6) .pulse-wave { animation-delay: calc(var(--animation-delay, 0s) + 0.4s); }
+    /* 가장 바깥쪽(1, 7번째) */
+    .pulse-source:nth-child(1) .pulse-wave,
+    .pulse-source:nth-child(7) .pulse-wave { animation-delay: calc(var(--animation-delay, 0s) + 0.6s); }
+
+
+    /* 파동 애니메이션 정의 */
+    @keyframes pulse-animation {
+        from {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 0.7;
+        }
+        to {
+            transform: translate(-50%, -50%) scale(5); /* 5배 커지면서 사라짐 */
+            opacity: 0;
+        }
+    }
+    /* ✨ 파도(웨이브) 애니메이션 스타일 끝 */
+
+    /* 로딩 완료 시 로딩 스크린을 숨김 */
+    body.loaded #loading-screen {
+      opacity: 0;
+      visibility: hidden;
+    }
+    
+    /* 처음에는 메인 콘텐츠를 숨김 */
+    #main-content {
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 1s ease-in 1s;
+    }
+
+    body.loaded #main-content {
+      opacity: 1;
+      visibility: visible;
+    }
+    /* ===== 로딩 스크린 스타일 끝 ===== */
+
+
+    .brand {
+      position: fixed;
+      top: 1rem;
+      left: 2rem;
+      z-index: 2;
+      font-size: 2.5rem;
+      color: #fff;
+      opacity: 0.9;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .brand:hover {
+      opacity: 1;
+      transform: scale(1.1);
+    }
+
+    .nav {
+      position: fixed;
+      top: 3rem;
+      left: 10rem;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      gap: 10rem;
+    }
+
+    .nav ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      gap: 3rem;
+      align-items: center;
+    }
+
+    .nav a {
+      color: #fff;
+      font-size: 1.2rem;
+      text-decoration: none;
+      transition: color 0.3s ease;
+      font-weight: 500;
+      opacity: 0.8;
+      line-height: 1.2;
+    }
+
+    .nav a:hover {
+      opacity: 1;
+    }
+
+    .menu ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      gap: 1rem;
+    }
+
+    .menu li {
+      margin: 0;
+    }
+
+    .menu a {
+      color: #333;
+      text-decoration: none;
+      font-size: 1.5rem;
+      opacity: 0.7;
+      font-family: 'Noto Sans KR', sans-serif;
+      text-transform: lowercase;
+      letter-spacing: 0.05em;
+      font-weight: 500;
+    }
+
+    .menu a:hover {
+      opacity: 1;
+    }
+
+    .full-screen {
+      width: 100%;
+      height: 100vh;
+      position: relative;
+      overflow: hidden;
+      transition: opacity 1s ease-in-out;
+    }
+
+    .full-screen.fade-out {
+      opacity: 0;
+    }
+
+    .full-screen img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      position: absolute;
+      top: 0;
+      left: 0;
+      image-rendering: crisp-edges;
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+      transform: translateZ(0);
+    }
+
+    .new-section {
+      width: 100%;
+      height: 120vh;
+      position: relative;
+      background-color: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .content {
+      position: relative;
+      z-index: 1;
+      padding: 3rem;
+      text-align: center;
+    }
+
+    .content h1 {
+      font-size: 4rem;
+      color: #fff;
+      margin-bottom: 3rem;
+      text-align: center;
+      font-weight: 400;
+      letter-spacing: 0.1em;
+    }
+
+    .menu-items {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 4rem;
+      padding: 0 6rem;
+    }
+
+    .menu-item {
+      position: relative;
+      width: 350px;
+      height: 450px;
+      margin: 0 3rem;
+      opacity: 0;
+      transform: translateY(50px);
+      transition: all 0.6s ease;
+    }
+
+    .menu-item.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .designer-image {
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transform: scale(0.8);
+      transition: all 0.6s ease;
+    }
+
+    .designer-image.visible {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .designer-text {
+      opacity: 0;
+      transform: translateX(50px);
+      transition: all 0.6s ease;
+    }
+
+    .designer-text.visible {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .contact-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 4rem;
+      padding: 4rem;
+    }
+
+    .contact-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .contact-item {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 2rem;
+      border-radius: 10px;
+      transition: all 0.3s ease;
+    }
+
+    .contact-item:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .contact-item h3 {
+      color: #fff;
+      margin-bottom: 1rem;
+      font-size: 1.2rem;
+    }
+
+    .contact-item p {
+      color: #fff;
+      opacity: 0.8;
+    }
+
+    .contact-form {
+      flex: 1;
+      max-width: 600px;
+    }
+
+    .contact-form h3 {
+      color: #fff;
+      margin-bottom: 2rem;
+      font-size: 1.5rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 1rem;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      border-radius: 5px;
+      color: #fff;
+      font-size: 1rem;
+    }
+
+    .form-group textarea {
+      height: 150px;
+      resize: vertical;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus {
+      outline: none;
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    #contact-form button {
+      width: 100%;
+      padding: 1rem;
+      background: #fff;
+      color: #000;
+      border: none;
+      border-radius: 5px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    #contact-form button:hover {
+      background: #ccc;
+    }
+
+    .designer-text.visible {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .designer-content {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4rem;
+      padding: 4rem;
+    }
+
+    .designer-image {
+      flex: 1;
+      position: relative;
+    }
+
+    .circle-placeholder {
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .profile-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .designer-image {
+      flex: 1;
+      position: relative;
+    }
+
+    .circle-placeholder {
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .designer-image .image-placeholder {
+      font-size: 1.5rem;
+      color: #fff;
+    }
+
+    .designer-text h2 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      color: #fff;
+    }
+
+    .designer-text p {
+      font-size: 1.2rem;
+      color: #fff;
+      line-height: 1.6;
+    }
+
+    .menu-image {
+      width: 350px;
+      height: 350px;
+      border-radius: 50%;
+      overflow: hidden;
+      margin: 0 auto 2rem;
+      box-shadow: 0 0 50px rgba(0,0,0,0.3);
+      border: 5px solid rgba(255, 255, 255, 0.05);
+      background: rgba(0, 0, 0, 0.1);
+    }
+
+    .profile-section {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4rem 0;
+    }
+
+    .profile-container {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      max-width: 800px;
+      width: 100%;
+    }
+
+    .profile-image {
+      width: 250px;
+      height: 250px;
+      border-radius: 50%;
+      overflow: hidden;
+    }
+
+    .profile-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .profile-text {
+      flex: 1;
+      max-width: 400px;
+    }
+
+    .profile-section {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4rem 0;
+    }
+
+    .profile-container {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      max-width: 800px;
+      width: 100%;
+    }
+
+    .profile-text h2 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      color: #fff;
+    }
+
+    .profile-text p {
+      font-size: 1.1rem;
+      line-height: 1.6;
+      color: #fff;
+    }
+
+    .profile-info {
+      flex: 1;
+      max-width: 400px;
+    }
+
+    .profile-info h2 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    .profile-info p {
+      font-size: 1.1rem;
+      line-height: 1.6;
+    }
+
+    .menu-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+
+    .menu-item:hover .menu-image img {
+      transform: scale(1.1);
+    }
+
+    .menu-item:hover .menu-image {
+      box-shadow: 0 0 80px rgba(0, 0, 0, 0.7);
+      border: 5px solid rgba(255, 255, 255, 0.1);
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .menu-text {
+      padding: 2rem;
+      text-align: center;
+      color: #fff;
+    }
+
+    .menu-text h2 {
+      font-size: 1.8rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .menu-text p {
+      font-size: 1rem;
+      margin-bottom: 1rem;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .menu-text .price {
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: #fff;
+    }
+
+    .footer {
+      position: fixed;
+      bottom: 2rem;
+      left: 2rem;
+      color: #333;
+      font-size: 0.8rem;
+      z-index: 2;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== ✨ Sci-Fi 로딩 스크린 시작 ===== -->
+  <div id="loading-screen">
+    <div class="loading-container">
+      
+      <!-- ✨ 파도 애니메이션 컨테이너 -->
+      <div class="wave-container">
+        <!-- 파동 발생 지점 (7개) -->
+        <div class="pulse-source" style="--animation-delay: 1.0s;"><div class="pulse-wave"></div><div class="pulse-wave"></div><div class="pulse-wave"></div></div>
+        <div class="pulse-source" style="--animation-delay: 0.5s;"><div class="pulse-wave"></div><div class="pulse-wave"></div><div class="pulse-wave"></div></div>
+        <div class="pulse-source" style="--animation-delay: 0.2s;"><div class="pulse-wave"></div><div class="pulse-wave"></div><div class="pulse-wave"></div></div>
+        <div class="pulse-source" style="--animation-delay: 0.0s;"><div class="pulse-wave"></div><div class="pulse-wave"></div><div class="pulse-wave"></div></div>
+        <div class="pulse-source" style="--animation-delay: 0.2s;"><div class="pulse-wave"></div><div class="pulse-wave"></div><div class="pulse-wave"></div></div>
+        <div class="pulse-source" style="--animation-delay: 0.5s;"><div class="pulse-wave"></div><div class="pulse-wave"></div><div class="pulse-wave"></div></div>
+        <div class="pulse-source" style="--animation-delay: 1.0s;"><div class="pulse-wave"></div><div class="pulse-wave"></div><div class="pulse-wave"></div></div>
+      </div>
+
+      <!-- 프로그레스 바 -->
+      <div class="progress-bar-container">
+        <div class="progress-bar"></div>
+      </div>
+      <div class="loading-percentage">0%</div>
+
+    </div>
+  </div>
+  <!-- ===== 로딩 스크린 끝 ===== -->
+
+
+  <!-- ===== 메인 콘텐츠 시작 ===== -->
+  <div id="main-content">
+
+    <div class="nav">
+      <div class="brand">Élan</div>
+      <ul>
+        <li><a href="#home">Home</a></li>
+        <li><a href="#designer">Designer</a></li>
+        <li><a href="#portfolio">Portfolio</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </div>
+
+    <div class="full-screen" id="first-section">
+      <img src="49d254ba5ce052cf022960c299a139521sss.jpg" alt="해변의 노을을 배경으로 걷는 두 사람" />
+    </div>
+
+    <div class="new-section" id="designer">
+      <div class="content">
+        <h1>Designer</h1>
+        <div class="profile-section">
+          <div class="profile-container">
+            <div class="profile-image">
+              <img src="KakaoTalk_20250623_034418582ss.jpg" alt="프로필 사진" class="profile-image">
+            </div>
+            <div class="profile-text">
+              <h2>이름</h2>
+              <p>디자이너 소개글을 여기에 작성합니다.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="new-section" id="portfolio">
+      <div class="content">
+        <h1>portfolio</h1>
+        <div class="menu-items">
+          <div class="menu-item">
+            <div class="menu-image">
+              <img src="your-image-1.jpg" alt="작품 1">
+            </div>
+            <div class="menu-text">
+              <h2>작품 1</h2>
+              <p>작품 설명을 한 줄로 간단하게</p>
+            </div>
+          </div>
+          <div class="menu-item">
+            <div class="menu-image">
+              <img src="your-image-2.jpg" alt="작품 2">
+            </div>
+            <div class="menu-text">
+              <h2>작품 2</h2>
+              <p>작품 설명을 한 줄로 간단하게</p>
+            </div>
+          </div>
+          <div class="menu-item">
+            <div class="menu-image">
+              <img src="your-image-3.jpg" alt="작품 3">
+            </div>
+            <div class="menu-text">
+              <h2>작품 3</h2>
+              <p>작품 설명을 한 줄로 간단하게</p>
+            </div>
+          </div>
+          <div class="menu-item">
+            <div class="menu-image">
+              <img src="your-image-4.jpg" alt="작품 4">
+            </div>
+            <div class="menu-text">
+              <h2>작품 4</h2>
+              <p>작품 설명을 한 줄로 간단하게</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="new-section" id="contact">
+      <div class="content">
+        <h1>Contact</h1>
+        <div class="contact-content">
+          <div class="contact-info">
+            <div class="contact-item">
+              <h3>Email</h3>
+              <p>your.email@example.com</p>
+            </div>
+            <div class="contact-item">
+              <h3>Phone</h3>
+              <p>+82-10-XXXX-XXXX</p>
+            </div>
+            <div class="contact-item">
+              <h3>Location</h3>
+              <p>Seoul, South Korea</p>
+            </div>
+          </div>
+          <div class="contact-form">
+            <h3>Send Message</h3>
+            <form id="contact-form">
+              <div class="form-group">
+                <input type="text" placeholder="Name" required>
+              </div>
+              <div class="form-group">
+                <input type="email" placeholder="Email" required>
+              </div>
+              <div class="form-group">
+                <textarea placeholder="Message" required></textarea>
+              </div>
+              <button type="submit">Send</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const firstSection = document.getElementById('first-section');
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach(entry => {
+            if (!entry.isIntersecting) {
+              firstSection.classList.add('fade-out');
+            } else {
+              firstSection.classList.remove('fade-out');
+            }
+          });
+        },
+        { threshold: 0.5 }
+      );
+      if (firstSection) observer.observe(firstSection);
+    </script>
+    <script>
+      const controller = new ScrollMagic.Controller();
+      const portfolioItems = document.querySelectorAll('.menu-item');
+      portfolioItems.forEach((item) => {
+        new ScrollMagic.Scene({
+          triggerElement: item,
+          triggerHook: 0.7,
+          reverse: false
+        })
+        .setClassToggle(item, 'visible')
+        .addTo(controller);
+      });
+      new ScrollMagic.Scene({
+        triggerElement: '#designer',
+        triggerHook: 0.7,
+        reverse: false
+      })
+      .setClassToggle('.profile-image', 'visible')
+      .setClassToggle('.profile-text', 'visible')
+      .addTo(controller);
+    </script>
+  </div>
+  <!-- ===== 메인 콘텐츠 끝 ===== -->
+
+  <!-- ===== 로딩 스크린 작동 스크립트 ===== -->
+  <script>
+    const progressBar = document.querySelector('.progress-bar');
+    const percentageText = document.querySelector('.loading-percentage');
+    let currentProgress = 0;
+
+    // 로딩 시뮬레이션을 위한 인터벌 설정 (30ms 마다 실행)
+    const interval = setInterval(() => {
+      if (currentProgress < 100) {
+        currentProgress++;
+        progressBar.style.width = currentProgress + '%';
+        percentageText.textContent = currentProgress + '%';
+      } else {
+        // 100%가 되면 인터벌을 멈추고, 0.5초 뒤에 화면 전환
+        clearInterval(interval);
+        setTimeout(() => {
+          document.body.classList.add('loaded');
+        }, 500);
+      }
+    }, 30); // 30ms * 100 = 3초 동안 로딩
+  </script>
+
+</body>
+</html>
